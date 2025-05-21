@@ -1,0 +1,106 @@
+{
+    "xml_folder": "C:\\Atom 3.3 x64\\Reports",
+    "output_filename_format": "{date}_{method}_{executor}",
+    "include_header": true,
+    "header_fields": {
+        "customer": true,
+        "executor": true,
+        "date": true,
+        "method": true,
+        "device": false,
+        "organization": false
+    },
+    "coefficients": {
+        "P": 1,
+        "Ba": 1,
+        "Sr": 1,
+        "Ti": 1,
+        "Mn": 10000,
+        "V": 10000,
+        "Cr": 10000,
+        "Co": 10000,
+        "Ni": 10000,
+        "Zr": 10000,
+        "Nb": 10000,
+        "Sc": 10000,
+        "Ce": 10000,
+        "La": 10000,
+        "Y": 10000,
+        "Yb": 10000,
+        "Be": 10000,
+        "Li": 10000,
+        "W": 10000,
+        "Mo": 10000,
+        "Sn": 10000,
+        "Cu": 10000,
+        "Pb": 10000,
+        "Zn": 10000,
+        "Cd": 10000,
+        "Bi": 10000,
+        "Ag": 10000,
+        "Ge": 10000,
+        "Ga": 10000,
+        "As": 10000,
+        "Sb": 10000,
+        "B": 10000,
+        "Au": 10000
+    },
+    "oxide_conversion": {
+        "P": true,
+        "Ba": true,
+        "Sr": true,
+        "Ti": true,
+        "Mn": false,
+        "V": false,
+        "Cr": false,
+        "Co": false,
+        "Ni": false,
+        "Zr": false,
+        "Nb": false,
+        "Sc": false,
+        "Ce": false,
+        "La": false,
+        "Y": false,
+        "Yb": false,
+        "Be": false,
+        "Li": false,
+        "W": false,
+        "Mo": false,
+        "Sn": false,
+        "Cu": false,
+        "Pb": false,
+        "Zn": false,
+        "Cd": false,
+        "Bi": false,
+        "Ag": false,
+        "Ge": false,
+        "Ga": false,
+        "As": false,
+        "Sb": false,
+        "B": false
+    },
+    "thresholds": {
+        "P": {
+            "lower": 0.0000001,
+            "upper": 1000000.0
+        },
+        "Ba": {
+            "lower": 0.0000001,
+            "upper": 1000000.0
+        },
+        "Sr": {
+            "lower": 0.0000001,
+            "upper": 1000000.0
+        },
+        "Ti": {
+            "lower": 0.0000001,
+            "upper": 1000000.0
+        },
+        "Mn": {
+            "lower": 0.0000001,
+            "upper": 1000000.0
+        }
+    },
+    "significant_figures": 3,
+    "delete_xml_after_processing": false
+}

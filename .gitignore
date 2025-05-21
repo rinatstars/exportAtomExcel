@@ -12,4 +12,6 @@
 *.xls
 *.xlsx
 *.xml
+/venv/
+
 
