@@ -5,46 +5,73 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import re
 import numpy as np
+import sys
 
 
 # Коэффициенты пересчета содержания элементов в содержание оксидов
 oxide_coefficients = {
-    "P": 2.291,   # P -> P2O5
-    "Ba": 1.117,  # Ba -> BaO
-    "Sr": 1.183,  # Sr -> SrO
-    "Ti": 1.668,  # Ti -> TiO2
-    "Mn": 1.291,  # Mn -> MnO
-    "V": 1.785,   # V -> V2O5
-    "Cr": 1.462,  # Cr -> Cr2O3
-    "Co": 1.271,  # Co -> CoO
-    "Ni": 1.273,  # Ni -> NiO
-    "Zr": 1.351,  # Zr -> ZrO2
-    "Nb": 1.431,  # Nb -> Nb2O5
-    "Sc": 1.534,  # Sc -> Sc2O3
-    "Ce": 1.228,  # Ce -> CeO2
-    "La": 1.173,  # La -> La2O3
-    "Y": 1.270,   # Y -> Y2O3
-    "Yb": 1.139,  # Yb -> Yb2O3
-    "Be": 2.775,  # Be -> BeO
-    "Li": 2.153,  # Li -> Li2O
-    "W": 1.261,   # W -> WO3
-    "Mo": 1.5,    # Mo -> MoO3
-    "Sn": 1.270,  # Sn -> SnO2
-    "Cu": 1.252,  # Cu -> CuO
-    "Pb": 1.077,  # Pb -> PbO
-    "Zn": 1.245,  # Zn -> ZnO
-    "Cd": 1.142,  # Cd -> CdO
+    # Основные породообразующие
+    "Si": 2.139,   # Si -> SiO2
+    "Al": 1.889,   # Al -> Al2O3
+    "Fe": 1.429,   # Fe -> Fe2O3 (по умолчанию Fe2O3)
+    "Fe2+": 1.286, # Fe2+ -> FeO (опционально, если нужно FeO)
+    "Mg": 1.658,   # Mg -> MgO
+    "Ca": 1.399,   # Ca -> CaO
+    "Na": 1.348,   # Na -> Na2O
+    "K": 1.205,    # K -> K2O
+
+    # Твой список + редкие
+    "P": 2.291,    # P -> P2O5
+    "Ba": 1.117,   # Ba -> BaO
+    "Sr": 1.183,   # Sr -> SrO
+    "Ti": 1.668,   # Ti -> TiO2
+    "Mn": 1.291,   # Mn -> MnO
+    "V": 1.785,    # V -> V2O5
+    "Cr": 1.462,   # Cr -> Cr2O3
+    "Co": 1.271,   # Co -> CoO
+    "Ni": 1.273,   # Ni -> NiO
+    "Zr": 1.351,   # Zr -> ZrO2
+    "Nb": 1.431,   # Nb -> Nb2O5
+    "Sc": 1.534,   # Sc -> Sc2O3
+    "Ce": 1.228,   # Ce -> CeO2
+    "La": 1.173,   # La -> La2O3
+    "Y": 1.270,    # Y -> Y2O3
+    "Yb": 1.139,   # Yb -> Yb2O3
+    "Be": 2.775,   # Be -> BeO
+    "Li": 2.153,   # Li -> Li2O
+    "W": 1.261,    # W -> WO3
+    "Mo": 1.500,   # Mo -> MoO3
+    "Sn": 1.270,   # Sn -> SnO2
+    "Cu": 1.252,   # Cu -> CuO
+    "Pb": 1.077,   # Pb -> PbO
+    "Zn": 1.245,   # Zn -> ZnO
+    "Cd": 1.142,   # Cd -> CdO
     "Bi": 1.115,   # Bi -> Bi2O3
-    "Ag": 1.074,  # Ag -> Ag2O
-    "Ge": 1.441,  # Ge -> GeO2
-    "Ga": 1.344,  # Ga -> Ga2O3
-    "As": 1.320,  # As -> As2O3
+    "Ag": 1.074,   # Ag -> Ag2O
+    "Ge": 1.441,   # Ge -> GeO2
+    "Ga": 1.344,   # Ga -> Ga2O3
+    "As": 1.320,   # As -> As2O3
     "Sb": 1.197,   # Sb -> Sb2O3
-    "B": 3.220,   # B -> B2O3
+    "B": 3.220,    # B -> B2O3
+
+    # Дополнительно часто встречающиеся
+    "Th": 1.137,   # Th -> ThO2
+    "U": 1.179,    # U -> U3O8 (условно)
 }
 
 # Маппинг для замены имен элементов на оксиды
 oxide_names = {
+    # Основные породообразующие
+    "Si": "SiO2",
+    "Al": "Al2O3",
+    "Fe": "Fe2O3",    # по умолчанию в виде Fe2O3
+    "Fe2+": "FeO",    # если отдельно учитывается Fe2+
+    "Mg": "MgO",
+    "Ca": "CaO",
+    "Na": "Na2O",
+    "K": "K2O",
+
+    # Элементы из списка
     "P": "P2O5",
     "Ba": "BaO",
     "Sr": "SrO",
@@ -76,8 +103,42 @@ oxide_names = {
     "Ga": "Ga2O3",
     "As": "As2O3",
     "Sb": "Sb2O3",
-    "B": "B2O3"
+    "B": "B2O3",
+
+    # Дополнительно встречающиеся в геохимии
+    "Th": "ThO2",
+    "U": "U3O8",    # иногда пересчитывают именно в U3O8
+    "Hf": "HfO2",
+    "Pr": "Pr6O11",
+    "Nd": "Nd2O3",
+    "Sm": "Sm2O3",
+    "Gd": "Gd2O3",
+    "Tb": "Tb4O7",
+    "Dy": "Dy2O3",
+    "Ho": "Ho2O3",
+    "Er": "Er2O3",
+    "Tm": "Tm2O3",
+    "Lu": "Lu2O3"
 }
+
+
+def get_unique_filename(file_path):
+    """
+    Получение уникального имени файла. Добавляет в конце ~n
+    :param file_path: исходное имя файла
+    :return: новое имя файла
+    """
+    if not os.path.exists(file_path):
+        return file_path  # Файл не существует, возвращаем оригинальное имя
+
+    base, ext = os.path.splitext(file_path)
+    counter = 1
+    while True:
+        new_path = f"{base}~{counter}{ext}"
+        if not os.path.exists(new_path):
+            return new_path
+        counter += 1
+
 
 
 # Функция для округления до n значащих цифр
@@ -85,6 +146,10 @@ def round_to_n_significant_figures(num, n):
     """
     Округляет число до заданного количества значащих цифр.
     Если число равно 0, возвращается 0.
+
+    :param num: число
+    :param n: кол-во значащих цифр
+    :return: округленное число
     """
     if num == 0:
         return 0
@@ -97,6 +162,10 @@ def process_data(xml_root, settings):
     """
     Обрабатывает данные XML, используя настройки для коэффициентов и границ.
     Возвращает заголовок документа, заголовки столбцов и строки данных для записи в Excel.
+
+    :param xml_root: папка где находится XML файл
+    :param settings: переменная с настройками программы
+    :return: [document_header, headers, rows] заголовок для документа, заголовок отчета, строки отчета
     """
     coefficients = settings.get("coefficients", {})  # Получение коэффициентов из настроек
     oxide_conversion = settings.get("oxide_conversion", {})  # Получение настроек пересчета в оксиды
@@ -149,7 +218,7 @@ def process_data(xml_root, settings):
             value = value_element.text.strip() if value_element is not None and value_element.text is not None else ""
 
             # Проверка, нужно ли пересчитывать в оксид
-            if oxide_conversion.get(name, True):
+            if oxide_conversion.get(name, False):
                 coefficient = coefficients.get(name, 1) * oxide_coefficients.get(name, 1)
                 name = oxide_names.get(name, name)  # Замена названия элемента на название оксида
             else:
@@ -268,6 +337,9 @@ def find_latest_xml_file(folder_path):
     """
     Ищет и возвращает последний добавленный XML файл в указанной папке.
     Если файлов нет, выбрасывает исключение.
+
+    :param folder_path: путь к папке с файлом XML
+    :return: имя последнего сохраненного XML
     """
     # Ищем все файлы с расширением .xml
     xml_files = glob.glob(os.path.join(folder_path, '*.xml'))
@@ -290,8 +362,11 @@ def main():
     5. Удаляет XML файл, если это указано в настройках.
     """
 
+    script_path_from_argv = os.path.abspath(sys.argv[0])
+    script_dir_from_argv = os.path.dirname(script_path_from_argv)
+
     # Загрузка настроек
-    settings_file = "settings.json"
+    settings_file = os.path.join(script_dir_from_argv, "settings.json")
     try:
         with open(settings_file, 'r', encoding='utf-8') as f:
             settings = json.load(f)
@@ -344,6 +419,8 @@ def main():
 
         # Полный путь к выходному файлу
         output_file = os.path.join(xml_folder, f"{output_filename}{tilde.group() if tilde else ''}.xlsx")
+
+        output_file = get_unique_filename(output_file)
 
         # Запись в Excel
         if settings["include_header"]:
