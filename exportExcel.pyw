@@ -6,6 +6,7 @@ import pandas as pd
 import re
 import numpy as np
 import sys
+import locale
 
 
 # Коэффициенты пересчета содержания элементов в содержание оксидов
@@ -120,6 +121,22 @@ oxide_names = {
     "Tm": "Tm2O3",
     "Lu": "Lu2O3"
 }
+
+# Устанавливаем локаль по умолчанию (системную)
+locale.setlocale(locale.LC_ALL, '')
+decimal_point = locale.localeconv()['decimal_point']
+
+
+def format_number(num, n):
+    """Округляем число до n значащих цифр и применяем системный разделитель"""
+    if num is None:
+        return ""
+    rounded = round_to_n_significant_figures(num, n)
+    # Преобразуем в строку с системным разделителем
+    s = str(rounded)
+    if decimal_point != ".":
+        s = s.replace(".", decimal_point)
+    return s
 
 
 def get_unique_filename(file_path):
@@ -248,17 +265,17 @@ def process_data(xml_root, settings):
 
                     # Проверка границ для нижней и верхней границы
                     if upper_bound_value < lower_bound:
-                        probe_row.append(f"< {round_to_n_significant_figures(lower_bound, significant_figures)}")
+                        probe_row.append(f"< {format_number(lower_bound, significant_figures)}")
                     elif lower_bound_value < lower_bound:
-                        probe_row.append(f"{round_to_n_significant_figures(lower_bound, significant_figures)} < C < {round_to_n_significant_figures(upper_bound_value, significant_figures)}")
+                        probe_row.append(f"{format_number(lower_bound, significant_figures)} < C < {format_number(upper_bound_value, significant_figures)}")
                     elif lower_bound_value > upper_bound:
-                        probe_row.append(f"> {round_to_n_significant_figures(upper_bound, significant_figures)}")
+                        probe_row.append(f"> {format_number(upper_bound, significant_figures)}")
                     elif upper_bound_value > upper_bound:
                         probe_row.append(
-                            f"{round_to_n_significant_figures(lower_bound_value, significant_figures)} < C < {round_to_n_significant_figures(upper_bound, significant_figures)}")
+                            f"{format_number(lower_bound_value, significant_figures)} < C < {format_number(upper_bound, significant_figures)}")
                     else:
                         probe_row.append(
-                            f"{round_to_n_significant_figures(lower_bound_value, significant_figures)} < C < {round_to_n_significant_figures(upper_bound_value, significant_figures)}")
+                            f"{format_number(lower_bound_value, significant_figures)} < C < {format_number(upper_bound_value, significant_figures)}")
 
             elif '< ' in value:
                 # Обработка значения со знаком "<"
@@ -267,9 +284,9 @@ def process_data(xml_root, settings):
 
                 # Проверка границ
                 if num_value < lower_bound:
-                    probe_row.append(f"< {round_to_n_significant_figures(lower_bound, significant_figures)}")
+                    probe_row.append(f"< {format_number(lower_bound, significant_figures)}")
                 else:
-                    probe_row.append(f"< {round_to_n_significant_figures(num_value, significant_figures)}")
+                    probe_row.append(f"< {format_number(num_value, significant_figures)}")
             elif '> ' in value:
                 # Обработка значения со знаком ">"
                 num_value = float(value.replace('> ', '').strip())
@@ -277,9 +294,9 @@ def process_data(xml_root, settings):
 
                 # Проверка границ
                 if num_value > upper_bound:
-                    probe_row.append(f"> {round_to_n_significant_figures(upper_bound, significant_figures)}")
+                    probe_row.append(f"> {format_number(upper_bound, significant_figures)}")
                 else:
-                    probe_row.append(f"> {round_to_n_significant_figures(num_value, significant_figures)}")
+                    probe_row.append(f"> {format_number(num_value, significant_figures)}")
             else:
                 # Обработка обычного значения
                 try:
