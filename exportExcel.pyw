@@ -402,10 +402,13 @@ def main():
     # Парсинг XML
     if xml_file:
         tree = ET.parse(xml_file)
-        root = tree.getroot()
+        analysis_root = tree.getroot()
 
-        # Обработка данных
-        document_header, headers, rows = process_data(root, settings)
+        # Конвертация analysis → results
+        results_root = convert_analysis_to_results(analysis_root, sheet_name=settings.get("sheet_name", "Отчет"))
+
+        # Обработка данных на основе results
+        document_header, headers, rows = process_data(results_root, settings)
 
         # Формируем шапку документа на основе настроек
         document_header_formated = []
@@ -453,6 +456,62 @@ def main():
             print(f"XML файл {xml_file} был сохранен.")
     else:
         print("Не найдено подходящих XML файлов.")
+
+
+def convert_analysis_to_results(analysis_root, sheet_name="Отчет"):
+    """
+    Преобразует исходный XML с корнем <analysis> в структуру <results>, аналогичную XSL-преобразованию.
+    """
+    results = ET.Element("results")
+
+    # ---------- HEADER ----------
+    header = ET.SubElement(results, "header")
+
+    def add_field(tag, xpath):
+        el = ET.SubElement(header, tag)
+        src = analysis_root.find(xpath)
+        el.text = src.text.strip() if src is not None and src.text else ""
+        return el
+
+    add_field("customer", "titul/comment")
+    add_field("executor", "titul/user")
+    add_field("date", "titul/date_str")
+    add_field("method", "titul/aname")
+    add_field("device", "titul/device")
+    add_field("organization", "titul/organization")
+
+    # ---------- PROBES ----------
+    # Список всех "видимых" проб
+    probes = analysis_root.findall("probes/probe[@visible='yes']")
+
+    # Колонки commonLine из указанного листа
+    columns = analysis_root.findall(f"columns/sheet[@name='{sheet_name}']/column[@type='commonLine']")
+
+    for probe in probes:
+        probe_id = probe.get("id")
+        probe_el = ET.SubElement(results, "probe")
+
+        name_el = ET.SubElement(probe_el, "name")
+        name_el.text = probe.get("name", "")
+
+        # Перебираем все элементы колонок
+        for col in columns:
+            element_el = ET.SubElement(probe_el, "element")
+
+            name_tag = ET.SubElement(element_el, "name")
+            elem_name = col.findtext("element", "")
+            name_tag.text = elem_name
+
+            value_tag = ET.SubElement(element_el, "value")
+
+            # Находим pc с нужным id
+            pc = col.find(f"cells/pc[@i='{probe_id}']")
+            if pc is not None and "v" in pc.attrib:
+                value_tag.text = pc.get("v", "")
+            else:
+                value_tag.text = ""
+
+    return results
 
 
 if __name__ == "__main__":

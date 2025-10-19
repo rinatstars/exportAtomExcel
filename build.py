@@ -75,14 +75,23 @@ def copytree_merge(src, dst):
 
 def git_push(version: str):
     try:
-        subprocess.run(["git", "add", "version.txt"], check=True)
-        subprocess.run(["git", "commit", "-m", f"Release v{version}"], check=True)
+        # Проверяем, есть ли изменения
+        status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+        if status.stdout.strip():  # если есть изменения
+            subprocess.run(["git", "add", "version.txt"], check=True)
+            subprocess.run(["git", "commit", "-m", f"Release v{version}"], check=True)
+            subprocess.run(["git", "push"], check=True)
+            print("✅ Изменения закоммичены и запушены")
+        else:
+            print("ℹ️ Нет изменений для коммита, пропускаем commit/push")
+
+        # В любом случае создаём тег и пушим его
         subprocess.run(["git", "tag", f"v{version}"], check=True)
-        subprocess.run(["git", "push"], check=True)
         subprocess.run(["git", "push", "--tags"], check=True)
-        print(f"✅ Git push завершён: тег v{version}")
+        print(f"🏷 Тег v{version} создан и запушен")
+
     except subprocess.CalledProcessError as e:
-        print("⚠️ Ошибка при git push:", e)
+        print("⚠️ Ошибка при git операции:", e)
 
 
 def build():
@@ -93,14 +102,17 @@ def build():
     # Удалим build/dist, чтобы не было мусора
     if os.path.exists("build"):
         shutil.rmtree("build")
-    if os.path.exists("dist"):
-        shutil.rmtree("dist")
+    # if os.path.exists("dist"):
+    #     shutil.rmtree("dist")
 
     # Сгенерируем файл с версией
     create_version_file(version)
 
     # Собираем по .spec
-    subprocess.run(["pyinstaller", SPEC_FILE], check=True)
+    subprocess.run(
+        [os.path.join("venv", "Scripts", "python.exe"), "-m", "PyInstaller", SPEC_FILE],
+        check=True
+    )
 
     # Создаем папку для этой версии
     os.makedirs(dist_dir, exist_ok=True)
