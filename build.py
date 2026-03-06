@@ -121,6 +121,9 @@ def build():
     shutil.move(exe_path, os.path.join(dist_dir, f"{APP_NAME}.exe"))
     # Перемещаем _internal (он будет в dist/ExportAtomExcel v*.*.*/_internal)
     internal_path = os.path.join("dist", APP_NAME, "_internal")
+    target = os.path.join(dist_dir, "_internal")
+    if os.path.exists(target):
+        shutil.rmtree(target)
     shutil.move(internal_path, dist_dir)
 
     # Собираем общий релиз,

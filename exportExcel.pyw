@@ -392,6 +392,7 @@ def main():
 
     # Поиск последнего XML файла в указанной папке
     xml_folder = settings.get("xml_folder", "")
+    report_folder = settings.get("report_folder", xml_folder)
     delete_xml = settings.get("delete_xml_after_processing", False) # Удалять XML после обработки?
     # Формирование имени файла на основе формата из настроек
     filename_format = settings.get("output_filename_format", "{date}_{method}_{executor}") # Формат имени файла
@@ -438,7 +439,7 @@ def main():
         )
 
         # Полный путь к выходному файлу
-        output_file = os.path.join(xml_folder, f"{output_filename}{tilde.group() if tilde else ''}.xlsx")
+        output_file = os.path.join(report_folder, f"{output_filename}{tilde.group() if tilde else ''}.xlsx")
 
         output_file = get_unique_filename(output_file)
 
