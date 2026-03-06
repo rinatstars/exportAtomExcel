@@ -4,9 +4,8 @@ import subprocess
 
 APP_NAME = "exportExcel"
 SPEC_FILE = "exportExcel.spec"
-FINAL_EXE_DIR = r"D:\Project_python\exportAtomExcelExe"
+PAYLOAD_DIR = r"D:\Project_python\exportAtomExcelExe\payload"
 EXPORTEXCELCONFIGURATOR_PATH = r"D:\Project_python\ExportExcelConfigurator"
-
 
 
 def get_version(path=None):
@@ -102,8 +101,8 @@ def build():
     # Удалим build/dist, чтобы не было мусора
     if os.path.exists("build"):
         shutil.rmtree("build")
-    # if os.path.exists("dist"):
-    #     shutil.rmtree("dist")
+    if os.path.exists(os.path.join("dist", APP_NAME)):
+        shutil.rmtree(os.path.join("dist", APP_NAME))
 
     # Сгенерируем файл с версией
     create_version_file(version)
@@ -122,17 +121,15 @@ def build():
     shutil.move(exe_path, os.path.join(dist_dir, f"{APP_NAME}.exe"))
     # Перемещаем _internal (он будет в dist/ExportAtomExcel v*.*.*/_internal)
     internal_path = os.path.join("dist", APP_NAME, "_internal")
-    shutil.move(internal_path, os.path.join(dist_dir, "_internal"))
+    shutil.move(internal_path, dist_dir)
 
     # Собираем общий релиз,
-    # копируем Конфигуратор
-    copytree_merge(dist_dir, FINAL_EXE_DIR)
-    # копируем скрипт exportAtomExcel
-    copytree_merge(os.path.join(EXPORTEXCELCONFIGURATOR_PATH, "dist", "latest"), FINAL_EXE_DIR)
+    # копируем Инсталлятор
+    copytree_merge(dist_dir, PAYLOAD_DIR)
 
     # создаем файл с версиями, сохраняем в конечную папку
     version_EAEC = get_version(EXPORTEXCELCONFIGURATOR_PATH)
-    create_common_version_file(version, version_EAEC, FINAL_EXE_DIR)
+    create_common_version_file(version, version_EAEC, PAYLOAD_DIR)
 
     # Обновляем latest
     if os.path.exists(latest_dir):
